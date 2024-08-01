@@ -1,4 +1,4 @@
-#include "../include/debugger.hpp"
+#include "../include/Debugger.hpp"
 #include "../include/linenoise.h"
 #include <iostream>
 #include <sstream>
@@ -27,7 +27,7 @@ bool is_prefix(const std::string &s1, const std::string &s2) {
   return std::equal(s1.begin(), s1.end(), s2.begin());
 }
 
-Debugger::Debugger(std::string program_name, pid_t pid)
+Debugger::Debugger(std::string &program_name, pid_t pid)
     : m_program_name{program_name}, m_pid{pid} {}
 
 void Debugger::handle_command(const std::string &line) {
@@ -36,6 +36,10 @@ void Debugger::handle_command(const std::string &line) {
 
   if (is_prefix(command, "continue")) {
     continue_execution();
+  } else if (is_prefix(command, "break")) {
+    std::string addr{args[1], 2};
+
+    set_breakpoint_at_addr(std::stol(addr, 0, 16));
   } else {
     std::cerr << "Unknown command";
   }
@@ -60,4 +64,12 @@ void Debugger::continue_execution() {
   int wait_status;
   auto options = 0;
   waitpid(m_pid, &wait_status, options);
+}
+
+void Debugger::set_breakpoint_at_addr(std::intptr_t addr) {
+  std::cout << "setting breakpoint at addr" << std::hex << addr << std::endl;
+
+  Breakpoint bp{m_pid, addr};
+  bp.enable();
+  // m_breakpoints[addr] = bp;
 }

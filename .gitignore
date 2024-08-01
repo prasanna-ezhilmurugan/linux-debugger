@@ -1,4 +1,6 @@
 build/
+out/
 .vscode/
+.cache/
 debugee.cpp
 CMakePresets.json
