@@ -1,5 +1,6 @@
 #include "../include/Debugger.hpp"
 #include "../include/linenoise.h"
+#include <exception>
 #include <iostream>
 #include <sstream>
 #include <sys/ptrace.h>
@@ -25,7 +26,7 @@ Debugger::Debugger(const std::string &program, const pid_t pid)
 
 void Debugger::run() {
   int wait_status;
-  auto options{};
+  int options{};
   waitpid(m_pid, &wait_status, options);
 
   char *line = nullptr;
@@ -43,9 +44,22 @@ void Debugger::handle_command(const std::string &line) {
   std::string command = args.at(0);
 
   if (command == "continue") {
+
     continue_execution();
+
+  } else if (command == "break") {
+
+    try {
+      std::string addr{args.at(1)};
+      set_breakpoint_at_addr(std::stol(addr, 0, 16));
+    } catch (exception e) {
+      std::cout << "exception occured in args" << std::endl;
+    }
+
   } else {
+
     std::cerr << "Unknown Command" << std::endl;
+    
   }
 }
 
@@ -53,6 +67,14 @@ void Debugger::continue_execution() {
   ptrace(PTRACE_CONT, m_pid, nullptr, nullptr);
 
   int wait_status;
-  int options = 0;
+  int options{};
   waitpid(m_pid, &wait_status, options);
+}
+
+void Debugger::set_breakpoint_at_addr(std::uintptr_t addr) {
+  std::cout << "Setting Breakpoint at addr : " << std::hex << addr << std::endl;
+
+  Breakpoint bp{m_pid, addr};
+  bp.enable();
+  m_breakpoints.insert_or_assign(addr, bp);
 }
