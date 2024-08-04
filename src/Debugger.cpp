@@ -1,6 +1,8 @@
 #include "../include/Debugger.hpp"
 #include "../include/linenoise.h"
+#include <iostream>
 #include <sstream>
+#include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <vector>
 
@@ -23,7 +25,7 @@ Debugger::Debugger(const std::string &program, const pid_t pid)
 
 void Debugger::run() {
   int wait_status;
-  auto options = 0;
+  auto options{};
   waitpid(m_pid, &wait_status, options);
 
   char *line = nullptr;
@@ -36,4 +38,21 @@ void Debugger::run() {
 
 void Debugger::handle_command(const std::string &line) {
   std::vector<std::string> args{Loader::split(line)};
+
+  // check whether the arguement is provided or not
+  std::string command = args.at(0);
+
+  if (command == "continue") {
+    continue_execution();
+  } else {
+    std::cerr << "Unknown Command" << std::endl;
+  }
+}
+
+void Debugger::continue_execution() {
+  ptrace(PTRACE_CONT, m_pid, nullptr, nullptr);
+
+  int wait_status;
+  int options = 0;
+  waitpid(m_pid, &wait_status, options);
 }

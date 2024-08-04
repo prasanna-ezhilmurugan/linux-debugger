@@ -3,4 +3,5 @@ out/
 .vscode/
 .cache/
 debugee.cpp
+main
 CMakePresets.json

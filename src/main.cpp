@@ -1,15 +1,17 @@
 #include "../include/Debugger.hpp"
 #include <iostream>
+#include <stdexcept>
 #include <sys/ptrace.h>
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
     std::cerr << "program not specified" << std::endl;
+    return -1;
   }
 
   // getting the program name
-  auto program_name = argv.at(1);
+  auto program_name = argv[1];
 
   // fork create new process creating a duplicate of parent process
   auto pid = fork();
@@ -26,7 +28,7 @@ int main(int argc, char *argv[]) {
     // parent process
     //  debugger is executed here
     std::cout << "parent process " << std::endl;
-    // Debugger dbg{program_name, pid};
-    // dbg.run();
+      Debugger dbg{program_name, pid};
+      dbg.run();
   }
 }
