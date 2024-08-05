@@ -30,7 +30,7 @@ void Debugger::run() {
   waitpid(m_pid, &wait_status, options);
 
   char *line = nullptr;
-  while ((line = linenoise("\nlinux-debugger> ")) != nullptr) {
+  while ((line = linenoise("linux-debugger> ")) != nullptr) {
     handle_command(line);
     linenoiseHistoryAdd(line);
     linenoiseFree(line);
@@ -49,17 +49,12 @@ void Debugger::handle_command(const std::string &line) {
 
   } else if (command == "break") {
 
-    try {
-      std::string addr{args.at(1)};
-      set_breakpoint_at_addr(std::stol(addr, 0, 16));
-    } catch (exception e) {
-      std::cout << "exception occured in args" << std::endl;
-    }
+    std::string addr{args.at(1)};
+    set_breakpoint_at_addr(std::stol(addr, 0, 16));
 
   } else {
 
     std::cerr << "Unknown Command" << std::endl;
-    
   }
 }
 

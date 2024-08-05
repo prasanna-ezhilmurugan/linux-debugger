@@ -1,6 +1,7 @@
 #include "../include/Debugger.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <sys/personality.h>
 #include <sys/ptrace.h>
 #include <unistd.h>
 
@@ -21,14 +22,15 @@ int main(int argc, char *argv[]) {
     //  debugee is executed here
     std::cout << "child process " << std::endl;
 
-    ptrace(PTRACE_TRACEME, pid, nullptr, nullptr);
+    personality(ADDR_NO_RANDOMIZE);
+    // ptrace(PTRACE_TRACEME, pid, nullptr, nullptr);
     execl(program_name, program_name, nullptr);
 
   } else if (pid >= 1) {
     // parent process
     //  debugger is executed here
     std::cout << "parent process " << std::endl;
-      Debugger dbg{program_name, pid};
-      dbg.run();
+    Debugger dbg{program_name, pid};
+    dbg.run();
   }
 }
