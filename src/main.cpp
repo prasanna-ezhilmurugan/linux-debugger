@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     std::cout << "child process " << std::endl;
 
     personality(ADDR_NO_RANDOMIZE);
-    // ptrace(PTRACE_TRACEME, pid, nullptr, nullptr);
+    ptrace(PTRACE_TRACEME, pid, nullptr, nullptr);
     execl(program_name, program_name, nullptr);
 
   } else if (pid >= 1) {
