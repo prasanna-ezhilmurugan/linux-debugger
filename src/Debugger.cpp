@@ -1,5 +1,6 @@
-#include "../include/Debugger.hpp"
-#include "../include/linenoise.h"
+#include "Debugger.hpp"
+#include "linenoise.h"
+
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -53,7 +54,6 @@ void Debugger::handle_command(const std::string &line) {
     set_breakpoint_at_addr(std::stol(addr, 0, 16));
 
   } else {
-
     std::cerr << "Unknown Command" << std::endl;
   }
 }
