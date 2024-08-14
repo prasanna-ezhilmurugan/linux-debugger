@@ -1,7 +1,11 @@
-#include "../include/Debugger.hpp"
+#include "Debugger.hpp"
+#include "utilities.hpp"
+
 #include <filesystem>
 #include <iostream>
 #include <optional>
+#include <sys/personality.h>
+#include <sys/ptrace.h>
 #include <unistd.h>
 #include <vector>
 
@@ -31,40 +35,41 @@ int main(int argc, char **argv) {
   std::filesystem::path input_file{};
   std::filesystem::path output_file{};
 
-  for(std::size_t i{}; i < args.size(); i++){
-    
-    // check arguments and handle error
+  for (std::size_t i{}; i < args.size(); i++) {
+    auto current_arg{args.at(i)};
+
+    std::cout << current_arg << std::endl;
+    if ((is_prefixed_with("--", current_arg) == "help") ||
+        (is_prefixed_with("-", current_arg) == "h")) {
+
+      std::cout << utilities::help_message;
+      return EXIT_SUCCESS;
+
+    } else {
+
+      if (input_file.empty()) {
+        input_file = current_arg;
+      } else {
+        std::cerr << "Cannot specify two input files." << std::endl;
+        return EXIT_FAILURE;
+      }
+    }
   }
 
-  return EXIT_SUCCESS;
+  if (input_file.empty()) {
+    std::cerr << "No input file specified" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  pid_t pid = fork();
+
+  if (pid == 0) {
+    std::cout << "Child process" << std::endl;
+    personality(ADDR_NO_RANDOMIZE);
+    ptrace(PTRACE_TRACEME, pid, nullptr, nullptr);
+    execl(input_file.c_str(), input_file.c_str(), nullptr);
+  } else if (pid > 0) {
+    Debugger dbg{input_file, pid};
+    dbg.run();
+  }
 }
-
-// int main(int argc, char *argv[]) {
-//   if (argc < 2) {
-//     std::cerr << "program not specified" << std::endl;
-//     return -1;
-//   }
-
-//   // getting the program name
-//   auto program_name = argv[1];
-
-//   // fork create new process creating a duplicate of parent process
-//   auto pid = fork();
-
-//   if (pid == 0) {
-//     // child process
-//     //  debugee is executed here
-//     std::cout << "child process " << std::endl;
-
-//     personality(ADDR_NO_RANDOMIZE);
-//     ptrace(PTRACE_TRACEME, pid, nullptr, nullptr);
-//     execl(program_name, program_name, nullptr);
-
-//   } else if (pid >= 1) {
-//     // parent process
-//     //  debugger is executed here
-//     std::cout << "parent process " << std::endl;
-//     Debugger dbg{program_name, pid};
-//     dbg.run();
-//   }
-// }
