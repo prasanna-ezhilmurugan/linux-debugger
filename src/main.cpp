@@ -1,12 +1,14 @@
+#include "debugger.hpp"
+
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
+#include <sys/ptrace.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include <sys/ptrace.h>
 
 std::optional<std::string> is_prefixed_with(const std::string &prefix,
                                             const std::string &str) {
@@ -56,10 +58,12 @@ int main(int argc, const char *argv[]) {
 
   pid_t pid = fork();
   if (pid == 0) {
-    ptrace(PTRACE_TRACEME,0, nullptr, nullptr);
+    ptrace(PTRACE_TRACEME, 0, nullptr, nullptr);
     execl(input_file.c_str(), input_file.c_str(), nullptr);
   } else if (pid > 0) {
-    std::cout << "Started debugging process" << pid << std::endl;
+    std::cout << "Started debugging process :" << pid << std::endl;
+    debugger db{input_file, pid};
+    db.run();
   }
 
   return EXIT_SUCCESS;
