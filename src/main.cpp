@@ -1,5 +1,7 @@
 #include "debugger.hpp"
 
+
+#include <sys/personality.h>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -58,6 +60,7 @@ int main(int argc, const char *argv[]) {
 
   pid_t pid = fork();
   if (pid == 0) {
+    personality(ADDR_NO_RANDOMIZE);
     ptrace(PTRACE_TRACEME, 0, nullptr, nullptr);
     execl(input_file.c_str(), input_file.c_str(), nullptr);
   } else if (pid > 0) {
