@@ -1,4 +1,5 @@
 #include "debugger.hpp"
+#include "breakpoint.hpp"
 #include "linenoise.h"
 
 #include <cstdint>
