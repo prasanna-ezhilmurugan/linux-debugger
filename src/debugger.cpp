@@ -1,9 +1,12 @@
 #include "debugger.hpp"
 #include "breakpoint.hpp"
 #include "linenoise.h"
+#include "register.hpp"
 
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <sys/ptrace.h>
@@ -54,6 +57,26 @@ void debugger::handle_command(const std::string &line) {
       set_breakpoint_at_addr(std::stol(addr, 0, 16));
     }
 
+  } else if (args.at(0) == "register") {
+
+    if (args.at(1) == "dump") {
+      dump_register();
+    } else if (args.at(1) == "read") {
+      read_register(args.at(2));
+    } else if (args.at(1) == "write") {
+      write_register(args.at(2), {args.at(3), 2});
+    }
+
+  } else if (args.at(0) == "memory") {
+
+    std::string addr{args.at(2), 2};
+    if (args.at(1) == "read") {
+      std::cout << std::hex << read_memory(std::stol(addr, 0, 16));
+    } else if (args.at(1) == "write") {
+      std::string value{args.at(3), 2};
+      write_memory(std::stol(addr, 0, 16), std::stol(value, 0, 16));
+    }
+
   } else {
     std::cout << "Unknown Command" << std::endl;
   }
@@ -76,4 +99,31 @@ void debugger::set_breakpoint_at_addr(const std::uintptr_t &addr) {
 
   m_breakpoints.insert_or_assign(addr, bp);
   std::cout << "breakpoint added in address " << std::hex << addr << std::endl;
+}
+
+// memory methods
+uint64_t debugger::read_memory(uint64_t address) {
+  return ptrace(PTRACE_PEEKDATA, m_pid, address, nullptr);
+}
+void debugger::write_memory(uint64_t address, uint64_t value) {
+  ptrace(PTRACE_POKEDATA, m_pid, address, value);
+}
+
+// register methods
+void debugger::dump_register() {
+  for (const auto &rd : g_register_descriptors) {
+    std::cout << rd.name << "0x" << std::setfill('0') << std::setw(16)
+              << std::hex << get_register_value(m_pid, rd.r) << std::endl;
+  }
+}
+
+void debugger::read_register(const std::string &register_name) {
+  std::cout << get_register_value(m_pid, get_register_from_name(register_name))
+            << std::endl;
+}
+
+void debugger::write_register(const std::string &register_name,
+                              const std::string &value) {
+  set_register_value(m_pid, get_register_from_name(register_name),
+                     std::stol(value, 0, 16));
 }

@@ -134,5 +134,4 @@ reg get_register_from_name(const std::string &name) {
   return it->r;
 }
 
-
 }; // namespace
