@@ -2,6 +2,5 @@ build/
 out/
 .vscode/
 .cache/
-debugee.cpp
-main
+test/
 CMakePresets.json
