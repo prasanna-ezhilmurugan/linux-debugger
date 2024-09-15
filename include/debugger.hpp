@@ -27,6 +27,13 @@ public:
   void write_register(const std::string &register_name,
                       const std::string &value);
 
+  uint64_t get_program_counter();
+  void set_program_counter(uint64_t value);
+
+  //stepover functionality
+  void step_over_breakpoint();
+  void wait_for_signal();
+
 private:
   std::filesystem::path m_program;
   pid_t m_pid;

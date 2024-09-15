@@ -29,9 +29,7 @@ debugger::debugger(const std::filesystem::path &program, const pid_t pid)
     : m_program{program}, m_pid{pid}, is_running{true} {}
 
 void debugger::run() {
-  int wait_status{};
-  int options{0};
-  waitpid(m_pid, &wait_status, options);
+  wait_for_signal();
 
   std::string line{};
   const std::string prompt{"mini-db> $ "};
@@ -83,11 +81,9 @@ void debugger::handle_command(const std::string &line) {
 }
 
 void debugger::continue_execution() {
+  step_over_breakpoint();
   ptrace(PTRACE_CONT, m_pid, nullptr, nullptr);
-
-  int wait_status{};
-  int options{0};
-  waitpid(m_pid, &wait_status, options);
+  wait_for_signal();
 }
 
 void debugger::set_breakpoint_at_addr(const std::uintptr_t &addr) {
@@ -126,4 +122,36 @@ void debugger::write_register(const std::string &register_name,
                               const std::string &value) {
   set_register_value(m_pid, get_register_from_name(register_name),
                      std::stol(value, 0, 16));
+}
+
+uint64_t debugger::get_program_counter(){
+  return get_register_value(m_pid, reg::rip);
+}
+
+void debugger::set_program_counter(uint64_t value){
+  set_register_value(m_pid, reg::rip, value);
+}
+
+void debugger::step_over_breakpoint() {
+  auto possible_breakpoint_loc = get_program_counter() -1;
+
+  if(m_breakpoints.count(possible_breakpoint_loc)){
+    auto &bp = m_breakpoints[possible_breakpoint_loc];
+
+    if (bp.is_enabled()){
+      auto previous_instruction_address = possible_breakpoint_loc;
+      set_program_counter(previous_instruction_address);
+
+      bp.disable();
+      ptrace(PTRACE_SINGLESTEP, m_pid, nullptr, nullptr);
+      wait_for_signal();
+      bp.enable();
+    }
+  }
+}
+
+void debugger::wait_for_signal(){
+  int wait_status;
+  int options = 0;
+  waitpid(m_pid, &wait_status, options);
 }
